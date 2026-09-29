@@ -1,3 +1,16 @@
+# Meu Estoque
+
+App para vendedores autônomos: cadastro de produtos (preço, custo, estoque), registro de saídas (venda com forma de pagamento, ou uso/avulsa) e histórico. O app NÃO processa pagamentos — só registra o método usado. UI em português (pt-BR).
+
+## Project conventions
+
+- Data is local-only (expo-sqlite, no backend). Schema and migrations live in `src/db/migrations.ts`, versioned via `PRAGMA user_version` — add a new `if (currentVersion === N)` step and bump `DATABASE_VERSION`; never edit a shipped migration.
+- Money is stored as INTEGER cents. Use `formatMoney` / `parseMoney` from `src/lib/format.ts`; never store floats.
+- Movements snapshot `product_name`, `unit_price` and `unit_cost` so history stays correct after product edits.
+- Stock changes from exits go through `registerExit` (`src/db/movements.ts`), which runs in an exclusive transaction.
+- Screens reload data with `useFocusEffect`. Colors/radii come from `src/lib/theme.ts`; icons from `lucide-react-native`.
+- Design reference: 3 screens — Estoque, Registrar Saída, Histórico — with a bottom tab bar.
+
 This is an Expo/React Native mobile application. Prioritize mobile-first patterns, performance, and cross-platform compatibility.
 
 ## Expo has changed — do not trust your training data
