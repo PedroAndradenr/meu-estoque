@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { colors, radius } from '@/lib/theme';
 
+/** `icon` recebe a cor atual (selecionado ou não) para desenhar o ícone combinando com o texto. */
 type Option<T extends string> = { value: T; label: string; icon?: (color: string) => ReactNode };
 
 type Props<T extends string> = {
@@ -11,6 +12,10 @@ type Props<T extends string> = {
   onChange: (value: T) => void;
 };
 
+/**
+ * Seletor de opções exclusivas em segmentos (ex.: Venda/Uso, forma de pagamento).
+ * Usado em Registrar e na tela de entrada de estoque.
+ */
 export function SegmentedControl<T extends string>({ options, value, onChange }: Props<T>) {
   return (
     <View style={styles.container}>

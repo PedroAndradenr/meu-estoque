@@ -8,14 +8,19 @@ import { colors, radius } from '@/lib/theme';
 
 type Props = {
   products: Product[];
+  /** Produto atualmente escolhido; null mostra o texto de instrução. */
   selected: Product | null;
   onSelect: (product: Product) => void;
 };
 
+/** Texto de estoque disponível, com aviso "(Baixo)" quando está no mínimo ou abaixo. */
 function availability(p: Product) {
   return `Disponível: ${p.stock} un${isLowStock(p) ? ' (Baixo)' : ''}`;
 }
 
+/**
+ * Campo que abre um modal com a lista de produtos para escolher um. Usado na tela Registrar.
+ */
 export function ProductPicker({ products, selected, onSelect }: Props) {
   const [open, setOpen] = useState(false);
 
@@ -57,6 +62,7 @@ export function ProductPicker({ products, selected, onSelect }: Props) {
             contentContainerStyle={{ padding: 20 }}
             ListEmptyComponent={<Text style={styles.empty}>Nenhum produto cadastrado ainda.</Text>}
             renderItem={({ item }) => {
+              // Produtos sem estoque aparecem, mas desabilitados: não dá para registrar saída deles.
               const outOfStock = item.stock <= 0;
               return (
                 <Pressable

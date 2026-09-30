@@ -2,8 +2,10 @@ import { StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-na
 
 import { colors, radius } from '@/lib/theme';
 
+/** Aceita todas as props de `TextInput`; `hint` é um texto de ajuda exibido abaixo do campo. */
 type Props = TextInputProps & { label: string; hint?: string };
 
+/** Campo de texto com rótulo e dica opcional. Usado em ProductForm, Configurações e Estoque. */
 export function TextField({ label, hint, style, ...inputProps }: Props) {
   return (
     <View style={styles.field}>

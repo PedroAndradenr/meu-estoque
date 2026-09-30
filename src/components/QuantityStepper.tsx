@@ -6,10 +6,13 @@ import { colors, radius } from '@/lib/theme';
 type Props = {
   value: number;
   onChange: (value: number) => void;
+  /** Quantidade mínima; padrão 1. */
   min?: number;
+  /** Limite superior, normalmente o estoque disponível do produto. */
   max: number;
 };
 
+/** Contador com botões -/+ para escolher a quantidade de uma saída. Usado em Registrar. */
 export function QuantityStepper({ value, onChange, min = 1, max }: Props) {
   const canDecrement = value > min;
   const canIncrement = value < max;

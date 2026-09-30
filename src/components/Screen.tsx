@@ -7,12 +7,17 @@ import { colors } from '@/lib/theme';
 type Props = {
   title: string;
   subtitle?: string;
+  /** Conteúdo extra à direita do cabeçalho (ex.: botões de ação). */
   right?: ReactNode;
   children: ReactNode;
-  /** Set to false when the children render their own scrolling list. */
+  /** Use false quando os filhos renderizam a própria lista rolável (ex.: FlatList). */
   scroll?: boolean;
 };
 
+/**
+ * Layout base das telas das abas: área segura no topo, cabeçalho com título/subtítulo e conteúdo,
+ * rolável ou não. Usado em Estoque, Produtos, Registrar e Histórico.
+ */
 export function Screen({ title, subtitle, right, children, scroll = true }: Props) {
   const header = (
     <View style={styles.header}>
@@ -25,6 +30,7 @@ export function Screen({ title, subtitle, right, children, scroll = true }: Prop
   );
 
   return (
+    // Só a borda superior: a barra de abas já cuida do espaço inferior.
     <SafeAreaView style={styles.safe} edges={['top']}>
       {scroll ? (
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">

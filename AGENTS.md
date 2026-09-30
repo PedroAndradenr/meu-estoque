@@ -6,10 +6,13 @@ App para vendedores autônomos: cadastro de produtos (preço, custo, estoque), r
 
 - Data is local-only (expo-sqlite, no backend). Schema and migrations live in `src/db/migrations.ts`, versioned via `PRAGMA user_version` — add a new `if (currentVersion === N)` step and bump `DATABASE_VERSION`; never edit a shipped migration.
 - Money is stored as INTEGER cents. Use `formatMoney` / `parseMoney` from `src/lib/format.ts`; never store floats.
-- Movements snapshot `product_name`, `unit_price` and `unit_cost` so history stays correct after product edits.
+- Percentages (card fees) are stored as INTEGER basis points (499 = 4,99%); use `parsePercent` / `formatPercent`.
+- Movements snapshot `product_name`, `unit_price`, `unit_cost`, `fee_rate` and `fee` so history stays correct after product or fee edits. Sale profit = revenue - cost - fee.
+- PDF: `buildReportHtml` (`src/lib/report.ts`) → `expo-print` with `base64` → written to `Paths.cache` with expo-file-system → `expo-sharing`. Don't share the `expo-print` URI directly: Expo Go can't read that directory.
+- Catalog data (name, code, cost, price) and stock are edited separately: `ProductForm` never touches stock; stock only goes up via `addStock` and down via `registerExit`.
 - Stock changes from exits go through `registerExit` (`src/db/movements.ts`), which runs in an exclusive transaction.
 - Screens reload data with `useFocusEffect`. Colors/radii come from `src/lib/theme.ts`; icons from `lucide-react-native`.
-- Design reference: 3 screens — Estoque, Registrar Saída, Histórico — with a bottom tab bar.
+- Tabs: Estoque, Produtos, Registrar, Histórico. Original design reference had 3 screens (Estoque, Registrar Saída, Histórico).
 
 This is an Expo/React Native mobile application. Prioritize mobile-first patterns, performance, and cross-platform compatibility.
 

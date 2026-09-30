@@ -1,8 +1,8 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
-import { Bell, Plus, Search } from 'lucide-react-native';
+import { Search, Settings } from 'lucide-react-native';
 import { useCallback, useMemo, useState } from 'react';
-import { FlatList, StyleSheet, Text, TextInput, View } from 'react-native';
+import { SectionList, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { IconButton } from '@/components/IconButton';
 import { ProductCard } from '@/components/ProductCard';
@@ -11,50 +11,50 @@ import { listProducts } from '@/db/products';
 import { isLowStock, type Product } from '@/db/types';
 import { colors, radius } from '@/lib/theme';
 
+/**
+ * Aba Estoque (tela inicial): lista os produtos com busca por nome/código, separando os que
+ * precisam de reposição. Tocar num produto abre o modal /estoque?id=; a engrenagem abre /configuracoes.
+ */
 export default function EstoqueScreen() {
   const db = useSQLiteContext();
   const [products, setProducts] = useState<Product[]>([]);
   const [query, setQuery] = useState('');
-  const [onlyLow, setOnlyLow] = useState(false);
 
+  // Recarrega ao voltar para a aba, para refletir vendas, entradas e edições feitas em outras telas.
   useFocusEffect(
     useCallback(() => {
       listProducts(db).then(setProducts);
     }, [db]),
   );
 
-  const hasLow = products.some(isLowStock);
-  const filtered = useMemo(() => {
+  // Filtra pela busca e divide em "precisa repor" (no/abaixo do mínimo) e "em estoque"; seções vazias somem.
+  const sections = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return products.filter(
-      (p) =>
-        (!onlyLow || isLowStock(p)) &&
-        (!q || p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q)),
+    const matches = products.filter(
+      (p) => !q || p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q),
     );
-  }, [products, query, onlyLow]);
+    const low = matches.filter(isLowStock);
+    const ok = matches.filter((p) => !isLowStock(p));
+    return [
+      { key: 'low', title: `PRECISA REPOR (${low.length})`, data: low },
+      { key: 'ok', title: `EM ESTOQUE (${ok.length})`, data: ok },
+    ].filter((s) => s.data.length > 0);
+  }, [products, query]);
 
   const count = products.length;
+  const totalUnits = products.reduce((sum, p) => sum + p.stock, 0);
 
   return (
     <Screen
       scroll={false}
       title="Meu Estoque"
-      subtitle={`${count} ${count === 1 ? 'item cadastrado' : 'itens cadastrados'}`}
+      subtitle={`${count} ${count === 1 ? 'produto' : 'produtos'} · ${totalUnits} ${totalUnits === 1 ? 'unidade' : 'unidades'}`}
       right={
-        <View style={styles.actions}>
-          <IconButton
-            accessibilityLabel="Mostrar apenas estoque baixo"
-            active={onlyLow}
-            badge={hasLow && !onlyLow}
-            onPress={() => setOnlyLow((v) => !v)}
-            icon={<Bell size={18} color={onlyLow ? colors.primary : colors.text} />}
-          />
-          <IconButton
-            accessibilityLabel="Cadastrar produto"
-            onPress={() => router.push('/produto')}
-            icon={<Plus size={18} color={colors.text} />}
-          />
-        </View>
+        <IconButton
+          accessibilityLabel="Configurações"
+          onPress={() => router.push('/configuracoes')}
+          icon={<Settings size={18} color={colors.text} />}
+        />
       }>
       <View style={styles.search}>
         <Search size={18} color={colors.textSubtle} />
@@ -66,22 +66,25 @@ export default function EstoqueScreen() {
           style={styles.searchInput}
         />
       </View>
-      <Text style={styles.section}>{onlyLow ? 'ESTOQUE BAIXO' : 'LISTA DE PRODUTOS'}</Text>
-      <FlatList
-        data={filtered}
+      <SectionList
+        sections={sections}
         keyExtractor={(p) => String(p.id)}
         contentContainerStyle={{ paddingBottom: 24 }}
         keyboardShouldPersistTaps="handled"
+        stickySectionHeadersEnabled={false}
+        renderSectionHeader={({ section }) => (
+          <Text style={[styles.section, section.key === 'low' && { color: colors.danger }]}>{section.title}</Text>
+        )}
         renderItem={({ item }) => (
           <ProductCard
             product={item}
-            onPress={() => router.push({ pathname: '/produto', params: { id: String(item.id) } })}
+            onPress={() => router.push({ pathname: '/estoque', params: { id: String(item.id) } })}
           />
         )}
         ListEmptyComponent={
           <Text style={styles.empty}>
             {count === 0
-              ? 'Nenhum produto cadastrado.\nToque em + para cadastrar o primeiro.'
+              ? 'Nenhum produto cadastrado.\nCadastre na aba Produtos.'
               : 'Nenhum produto encontrado.'}
           </Text>
         }
@@ -91,7 +94,6 @@ export default function EstoqueScreen() {
 }
 
 const styles = StyleSheet.create({
-  actions: { flexDirection: 'row' },
   search: {
     flexDirection: 'row',
     alignItems: 'center',

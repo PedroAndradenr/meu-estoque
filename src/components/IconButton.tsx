@@ -1,25 +1,25 @@
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 
 import { colors, radius } from '@/lib/theme';
 
 type Props = {
   icon: ReactNode;
   onPress: () => void;
+  /** Obrigatório: o botão só tem ícone, então é o único texto para leitores de tela. */
   accessibilityLabel: string;
-  active?: boolean;
-  badge?: boolean;
 };
 
-export function IconButton({ icon, onPress, accessibilityLabel, active, badge }: Props) {
+/** Botão quadrado só com ícone, usado nas ações do cabeçalho de `Screen` (Estoque, Histórico). */
+export function IconButton({ icon, onPress, accessibilityLabel }: Props) {
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       onPress={onPress}
-      style={({ pressed }) => [styles.button, active && styles.active, pressed && { opacity: 0.7 }]}>
+      hitSlop={6}
+      style={({ pressed }) => [styles.button, pressed && { opacity: 0.7 }]}>
       {icon}
-      {badge ? <View style={styles.badge} /> : null}
     </Pressable>
   );
 }
@@ -35,15 +35,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 8,
-  },
-  active: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
-  badge: {
-    position: 'absolute',
-    top: 8,
-    right: 9,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.danger,
   },
 });

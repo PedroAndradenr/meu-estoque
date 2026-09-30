@@ -11,10 +11,23 @@ import { Screen } from '@/components/Screen';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { registerExit } from '@/db/movements';
 import { listProducts } from '@/db/products';
-import { PAYMENT_METHODS, type MovementType, type PaymentMethod, type Product } from '@/db/types';
-import { formatMoney } from '@/lib/format';
+import { getCardFees } from '@/db/settings';
+import {
+  calculateFee,
+  feeRateFor,
+  PAYMENT_METHODS,
+  type CardFees,
+  type MovementType,
+  type PaymentMethod,
+  type Product,
+} from '@/db/types';
+import { formatMoney, formatPercent } from '@/lib/format';
 import { colors, radius } from '@/lib/theme';
 
+/**
+ * Aba Registrar: dá baixa no estoque de um produto, como venda (com forma de pagamento) ou
+ * uso/avulsa. Mostra o estoque restante e a taxa da maquininha; após salvar, vai para o Histórico.
+ */
 export default function RegistrarScreen() {
   const db = useSQLiteContext();
   const [products, setProducts] = useState<Product[]>([]);
@@ -23,8 +36,14 @@ export default function RegistrarScreen() {
   const [quantity, setQuantity] = useState(1);
   const [payment, setPayment] = useState<PaymentMethod | null>(null);
   const [saving, setSaving] = useState(false);
+  const [fees, setFees] = useState<CardFees>({ debito: 0, credito: 0 });
 
-  const reload = useCallback(() => listProducts(db).then(setProducts), [db]);
+  const reload = useCallback(async () => {
+    const [list, cardFees] = await Promise.all([listProducts(db), getCardFees(db)]);
+    setProducts(list);
+    setFees(cardFees);
+  }, [db]);
+  // Recarrega ao focar a aba: o estoque pode ter mudado e as taxas podem ter sido editadas.
   useFocusEffect(
     useCallback(() => {
       reload();
@@ -33,9 +52,16 @@ export default function RegistrarScreen() {
 
   const selected = products.find((p) => p.id === selectedId) ?? null;
   const remaining = selected ? selected.stock - quantity : 0;
+  const total = selected ? selected.price * quantity : 0;
+  // Prévia da taxa: só crédito/débito têm taxa; uso/avulsa nunca tem. O valor definitivo é gravado
+  // na movimentação por registerExit.
+  const feeRate = type === 'venda' ? feeRateFor(fees, payment) : 0;
+  const fee = calculateFee(total, feeRate);
+  // remaining >= 0 impede retirar mais do que há em estoque; venda exige forma de pagamento.
   const canSubmit =
     !!selected && quantity >= 1 && remaining >= 0 && (type === 'uso' || payment !== null) && !saving;
 
+  /** Registra a saída, limpa quantidade/pagamento e leva o usuário ao Histórico. */
   async function handleSubmit() {
     if (!selected || !canSubmit) return;
     setSaving(true);
@@ -60,6 +86,7 @@ export default function RegistrarScreen() {
         selected={selected}
         onSelect={(p) => {
           setSelectedId(p.id);
+          // Nova seleção de produto volta a quantidade para 1 (o máximo depende do estoque dele).
           setQuantity(1);
         }}
       />
@@ -106,7 +133,14 @@ export default function RegistrarScreen() {
             Estoque restante após a baixa: <Text style={styles.infoStrong}>{remaining} unidades</Text>
             {type === 'venda' ? (
               <>
-                {'\n'}Total da venda: <Text style={styles.infoStrong}>{formatMoney(selected.price * quantity)}</Text>
+                {'\n'}Total da venda: <Text style={styles.infoStrong}>{formatMoney(total)}</Text>
+                {feeRate > 0 ? (
+                  <>
+                    {'\n'}Taxa da maquininha ({formatPercent(feeRate)}):{' '}
+                    <Text style={styles.infoStrong}>- {formatMoney(fee)}</Text>
+                    {'\n'}Você recebe: <Text style={styles.infoStrong}>{formatMoney(total - fee)}</Text>
+                  </>
+                ) : null}
               </>
             ) : null}
           </Text>

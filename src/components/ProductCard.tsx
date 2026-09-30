@@ -6,6 +6,10 @@ import { colors, radius } from '@/lib/theme';
 
 type Props = { product: Product; onPress: () => void };
 
+/**
+ * Cartão de produto da lista de Estoque: nome, código, estoque e preço, com destaque
+ * vermelho e selo "ESTOQUE BAIXO" quando o estoque atinge o mínimo.
+ */
 export function ProductCard({ product, onPress }: Props) {
   const low = isLowStock(product);
   return (

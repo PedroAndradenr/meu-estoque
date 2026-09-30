@@ -3,10 +3,14 @@
   "version": "1.0.0",
   "main": "expo-router/entry",
   "dependencies": {
+    "@react-native-community/datetimepicker": "9.1.0",
     "expo": "~57.0.26",
     "expo-constants": "~57.0.20",
+    "expo-file-system": "~57.0.7",
     "expo-linking": "~57.0.11",
+    "expo-print": "~57.0.2",
     "expo-router": "~57.0.24",
+    "expo-sharing": "~57.0.22",
     "expo-sqlite": "~57.0.3",
     "expo-status-bar": "~57.0.1",
     "lucide-react-native": "^1.49.0",
@@ -29,7 +33,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "pdfs": "mkdir -p ~/Downloads && ${ANDROID_HOME:-$HOME/Android/Sdk}/platform-tools/adb shell ls /sdcard/Documents/ | grep \"^vendas_.*\\.pdf$\" | while read -r f; do ${ANDROID_HOME:-$HOME/Android/Sdk}/platform-tools/adb pull \"/sdcard/Documents/$f\" ~/Downloads/; done"
   },
   "private": true
 }
